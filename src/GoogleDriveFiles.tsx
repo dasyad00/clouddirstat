@@ -1,28 +1,29 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
-  List,
-  ListItem,
-  ListItemText,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
+import { GDriveFile, getFiles } from "./googleDriveService";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"];
 
-interface GDriveFile {
-  id: string;
-  kind: string;
-  mimeType: string;
-  name: string;
-}
-
-interface GDriveFilesListResponse {
-  nextPageToken: string;
-  kind: string;
-  incompleteSearch: boolean;
-  files: GDriveFile[];
+const UNITS = ["B", "KB", "MB", "GB", "TB"];
+function convertBytes(size: number): string {
+  for (const u of UNITS) {
+    if (size < 1024) {
+      return `${size.toFixed(2)} ${u}`;
+    }
+    size /= 1024;
+  }
+  return `${size.toFixed(2)} ${UNITS[-1]}`;
 }
 
 const GoogleDriveFiles: React.FC = () => {
@@ -34,15 +35,8 @@ const GoogleDriveFiles: React.FC = () => {
       console.log("fetchData()");
       if (token === "") return;
       try {
-        const response = await axios.get<GDriveFilesListResponse>(
-          "https://www.googleapis.com/drive/v3/files",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log(response.data.files);
+        const response = await getFiles(token);
+        console.log(response.data);
         setFiles(response.data.files || []);
       } catch (error) {
         console.error("Error fetching files:", error);
@@ -69,13 +63,44 @@ const GoogleDriveFiles: React.FC = () => {
         Google Drive Files
       </Typography>
       <Button onClick={() => login()}> Login</Button>
-      <List>
-        {files.map((file) => (
-          <ListItem key={file.id}>
-            <ListItemText primary={file.name} />
-          </ListItem>
-        ))}
-      </List>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox" />
+              <TableCell>File name</TableCell>
+              <TableCell align="right">Size</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {files.map((file) => (
+              <TableRow
+                key={file.id}
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell>
+                  <img
+                    srcSet={`${file.iconLink}?w=161&fit=crop&auto=format&dpr=2 2x`}
+                    src={`${file.iconLink}?w=161&fit=crop&auto=format`}
+                    alt={file.iconLink}
+                    loading="lazy"
+                  />
+                </TableCell>
+                <TableCell component="th" scope="row">
+                  {file.name}
+                </TableCell>
+                {file.size ? (
+                  <TableCell align="right">
+                    {convertBytes(parseInt(file.size))}
+                  </TableCell>
+                ) : (
+                  <TableCell align="right"></TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 };
