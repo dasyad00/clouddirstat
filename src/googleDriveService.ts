@@ -10,6 +10,10 @@ export interface GDriveFile {
   parents: string[];
 }
 
+export interface GDriveFilesListRequestParameters {
+  q: string;
+}
+
 export interface GDriveFilesListResponse {
   nextPageToken: string;
   kind: string;
@@ -17,7 +21,7 @@ export interface GDriveFilesListResponse {
   files: GDriveFile[];
 }
 
-export function getFiles(token: string) {
+export function getFiles(token: string, params: GDriveFilesListRequestParameters) {
   return axios.get<GDriveFilesListResponse>(
     "https://www.googleapis.com/drive/v3/files",
     {
@@ -26,7 +30,7 @@ export function getFiles(token: string) {
       },
       params: {
         spaces: "drive",
-        q: "'root' in parents",
+        q: params.q,
         fields:
           "nextPageToken, kind, incompleteSearch, files(id, name, size, mimeType, kind, parents, iconLink)",
       },
