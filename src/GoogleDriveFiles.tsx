@@ -26,6 +26,28 @@ function convertBytes(size: number): string {
   return `${size.toFixed(2)} ${UNITS[-1]}`;
 }
 
+const gdriveFolderMimeType = "application/vnd.google-apps.folder"
+
+const alphabeticalSort = (a: string, b: string) => {
+  if (a < b) {
+    return -1;
+  }
+  if (a > b) {
+    return 1;
+  }
+  return 0;
+}
+
+const folderFirstSort = (a: GDriveFile, b: GDriveFile) => {
+  if (a.mimeType === gdriveFolderMimeType && b.mimeType !== gdriveFolderMimeType) {
+    return -1;
+  }
+  if (a.mimeType !== gdriveFolderMimeType && b.mimeType === gdriveFolderMimeType) {
+    return 1;
+  }
+  return alphabeticalSort(a.name, b.name);
+}
+
 const GoogleDriveFiles: React.FC = () => {
   const [token, setToken] = useState<string>("");
   const [files, setFiles] = useState<GDriveFile[]>([]);
@@ -37,6 +59,7 @@ const GoogleDriveFiles: React.FC = () => {
       try {
         const response = await getFiles(token);
         console.log(response.data);
+        response.data.files.sort((a, b) => folderFirstSort(a,b));
         setFiles(response.data.files || []);
       } catch (error) {
         console.error("Error fetching files:", error);
