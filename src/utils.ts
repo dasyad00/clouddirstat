@@ -31,3 +31,14 @@ export function partition<T> (
     })
     return partitioned
 }
+
+const UNITS = ["B", "KB", "MB", "GB", "TB"];
+export function convertBytes(size: number): string {
+  for (const u of UNITS) {
+    if (size < 1024) {
+      return `${size.toFixed(2)} ${u}`;
+    }
+    size /= 1024;
+  }
+  return `${size.toFixed(2)} ${UNITS[-1]}`;
+}

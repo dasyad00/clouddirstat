@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
 import { GDriveFile, getFiles } from "./googleDriveService";
 import { partition } from "./utils";
 import { CloudItem } from "./cloudDrive";
+import { ListView } from "./components/ListView";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"];
 
@@ -58,17 +49,6 @@ async function getFilesRecursive(
   }));
   const cloudFolders = await Promise.all(cloudFoldersPromise);
   return (cloudFolders as CloudItem[]).concat(cloudFiles);
-}
-
-const UNITS = ["B", "KB", "MB", "GB", "TB"];
-function convertBytes(size: number): string {
-  for (const u of UNITS) {
-    if (size < 1024) {
-      return `${size.toFixed(2)} ${u}`;
-    }
-    size /= 1024;
-  }
-  return `${size.toFixed(2)} ${UNITS[-1]}`;
 }
 
 const gdriveFolderMimeType = "application/vnd.google-apps.folder";
@@ -136,42 +116,7 @@ const GoogleDriveFiles: React.FC = () => {
         Google Drive Files
       </Typography>
       <Button onClick={() => login()}> Login</Button>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox" />
-              <TableCell>File name</TableCell>
-              <TableCell align="right">Size</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {files.map((file) => (
-              <TableRow
-                key={file.id}
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell>
-                  <img
-                    srcSet={`${file.iconLink}?w=161&fit=crop&auto=format&dpr=2 2x`}
-                    src={`${file.iconLink}?w=161&fit=crop&auto=format`}
-                    alt={file.iconLink}
-                    loading="lazy"
-                  />
-                </TableCell>
-                <TableCell component="th" scope="row">
-                  {file.name}
-                </TableCell>
-                {file.size ? (
-                  <TableCell align="right">{convertBytes(file.size)}</TableCell>
-                ) : (
-                  <TableCell align="right"></TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ListView files={files} />
     </div>
   );
 };
