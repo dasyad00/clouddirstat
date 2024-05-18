@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Button, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
-import { GDriveFile, getFiles } from "./googleDriveService";
+import { getFiles } from "./googleDriveService";
 import { partition } from "./utils";
 import { CloudItem } from "./cloudDrive";
 import { ListView } from "./components/ListView";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"];
+
+const gdriveFolderMimeType = "application/vnd.google-apps.folder";
 
 async function getFilesRecursive(
   token: string,
@@ -50,34 +52,6 @@ async function getFilesRecursive(
   const cloudFolders = await Promise.all(cloudFoldersPromise);
   return (cloudFolders as CloudItem[]).concat(cloudFiles);
 }
-
-const gdriveFolderMimeType = "application/vnd.google-apps.folder";
-
-const alphabeticalSort = (a: string, b: string) => {
-  if (a < b) {
-    return -1;
-  }
-  if (a > b) {
-    return 1;
-  }
-  return 0;
-};
-
-const folderFirstSort = (a: GDriveFile, b: GDriveFile) => {
-  if (
-    a.mimeType === gdriveFolderMimeType &&
-    b.mimeType !== gdriveFolderMimeType
-  ) {
-    return -1;
-  }
-  if (
-    a.mimeType !== gdriveFolderMimeType &&
-    b.mimeType === gdriveFolderMimeType
-  ) {
-    return 1;
-  }
-  return alphabeticalSort(a.name, b.name);
-};
 
 const GoogleDriveFiles: React.FC = () => {
   const [token, setToken] = useState<string>("");
