@@ -1,14 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { Button, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
-import { getFiles } from "./googleDriveService";
+import { GDriveFile, getFiles } from "./googleDriveService";
 import { partition } from "./utils";
-import { CloudItem } from "./cloudDrive";
+import { CloudFolder, CloudItem, instanceOfCloudFolder } from "./cloudDrive";
 import { ListView } from "./components/ListView";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"];
 
 const gdriveFolderMimeType = "application/vnd.google-apps.folder";
+
+function getCloudFolderSize(children: CloudItem[]): number {
+  return children.length > 0 ? children.map((i) => i.size).reduce((a, b) => a + b) : 0;
+}
+
+function GDriveFileToCloudFolder(folder: GDriveFile, children: CloudItem[]) : CloudFolder {
+  const folderSize = getCloudFolderSize(children);
+    return {
+      id: folder.id,
+      name: folder.name,
+      size: folderSize,
+      iconLink: folder.iconLink,
+      children: children,
+    };
+}
 
 async function getFilesRecursive(
   token: string,
@@ -24,24 +39,10 @@ async function getFilesRecursive(
   );
   const cloudFoldersPromise = folders.map(async (folder) => {
     if (depth < 0) {
-      return {
-        id: folder.id,
-        name: folder.name,
-        size: 0,
-        iconLink: folder.iconLink,
-        children: [],
-      };
+      return GDriveFileToCloudFolder(folder, []);
     }
     const items = await getFilesRecursive(token, folder.id, depth - 1);
-    const folderSize =
-      items.length > 0 ? items.map((i) => i.size).reduce((a, b) => a + b) : 0;
-    return {
-      id: folder.id,
-      name: folder.name,
-      size: folderSize,
-      iconLink: folder.iconLink,
-      children: items,
-    };
+    return GDriveFileToCloudFolder(folder,  items);
   });
   const cloudFiles = files.map((file) => ({
     id: file.id,
@@ -55,7 +56,7 @@ async function getFilesRecursive(
 
 const GoogleDriveFiles: React.FC = () => {
   const [token, setToken] = useState<string>("");
-  const [files, setFiles] = useState<CloudItem[]>([]);
+  const [rootFolder, setRootFolder] = useState<CloudFolder>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,8 +64,15 @@ const GoogleDriveFiles: React.FC = () => {
       if (token === "") return;
       try {
         const files = await getFilesRecursive(token);
+        const rootFolder: CloudFolder = {
+          id: "root",
+          name: "My Drive",
+          size: getCloudFolderSize(files),
+          iconLink: "",
+          children: files,
+        };
         console.log(files);
-        setFiles(files || []);
+        setRootFolder(rootFolder);
       } catch (error) {
         console.error("Error fetching files:", error);
       }
@@ -84,13 +92,25 @@ const GoogleDriveFiles: React.FC = () => {
     scope: SCOPES.join(" "),
   });
 
+  function onItemDoubleClick(
+    event: React.MouseEvent<unknown>,
+    cloudItem: CloudItem
+  ): void {
+    if (instanceOfCloudFolder(cloudItem)) {
+      setRootFolder(cloudItem);
+    }
+  }
+
   return (
     <div>
       <Typography variant="h4" gutterBottom>
         Google Drive Files
       </Typography>
       <Button onClick={() => login()}> Login</Button>
-      <ListView files={files} />
+      <ListView
+        files={rootFolder?.children || []}
+        onItemDoubleClick={onItemDoubleClick}
+      />
     </div>
   );
 };

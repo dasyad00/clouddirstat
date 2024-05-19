@@ -10,7 +10,7 @@ import {
   Box,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
-import { CloudFolder, CloudItem } from "../cloudDrive";
+import { CloudItem, instanceOfCloudFolder } from "../cloudDrive";
 import { convertBytes } from "../utils";
 import React, { useMemo, useState } from "react";
 
@@ -45,10 +45,6 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   return 0;
 }
 
-function instanceOfCloudFolder(object: CloudItem): object is CloudFolder {
-  return "children" in object;
-}
-
 const folderFirstSort = (a: CloudItem, b: CloudItem) => {
   if (instanceOfCloudFolder(a) && !instanceOfCloudFolder(b)) {
     return -1;
@@ -75,11 +71,12 @@ function getComparator(
 
 interface ListViewProps {
   files: CloudItem[];
+  onItemDoubleClick: (event: React.MouseEvent<unknown>, cloudItem: CloudItem) => void
   // onRequestSort: (event: React.MouseEvent<unknown>, property: keyof CloudItem) => void;
 }
 
 export const ListView = (props: ListViewProps) => {
-  const { files } = props;
+  const { files, onItemDoubleClick } = props;
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof CloudItem>("name");
 
@@ -137,8 +134,10 @@ export const ListView = (props: ListViewProps) => {
         <TableBody>
           {visibleRows.map((file: CloudItem) => (
             <TableRow
+              hover
               key={file.id}
               sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              onDoubleClick={(event) => onItemDoubleClick(event, file)}
             >
               <TableCell>
                 <img
