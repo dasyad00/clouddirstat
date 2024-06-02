@@ -1,3 +1,4 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   TableContainer,
   Paper,
@@ -8,6 +9,7 @@ import {
   TableBody,
   TableSortLabel,
   Box,
+  IconButton,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { CloudItem, instanceOfCloudFolder } from "../cloudDrive";
@@ -71,14 +73,18 @@ function getComparator(
 
 interface ListViewProps {
   files: CloudItem[];
-  onItemDoubleClick: (event: React.MouseEvent<unknown>, cloudItem: CloudItem) => void
+  onNavigateUp?: (event: React.MouseEvent<unknown>) => void;
+  onItemDoubleClick: (
+    event: React.MouseEvent<unknown>,
+    cloudItem: CloudItem
+  ) => void;
   // onRequestSort: (event: React.MouseEvent<unknown>, property: keyof CloudItem) => void;
 }
 
 export const ListView = (props: ListViewProps) => {
-  const { files, onItemDoubleClick } = props;
-  const [order, setOrder] = useState<Order>("asc");
-  const [orderBy, setOrderBy] = useState<keyof CloudItem>("name");
+  const { files, onNavigateUp, onItemDoubleClick } = props;
+  const [order, setOrder] = useState<Order>("desc");
+  const [orderBy, setOrderBy] = useState<keyof CloudItem>("size");
 
   const handleRequestSort = (
     _: React.MouseEvent<unknown>,
@@ -106,7 +112,13 @@ export const ListView = (props: ListViewProps) => {
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell padding="checkbox" />
+            <TableCell padding="checkbox" align="center">
+              {onNavigateUp && (
+                <IconButton onClick={(event) => onNavigateUp(event)}>
+                  <ArrowBackIcon />
+                </IconButton>
+              )}
+            </TableCell>
             {headerCells.map((headerCell) => (
               <TableCell
                 key={headerCell.id}
@@ -150,11 +162,9 @@ export const ListView = (props: ListViewProps) => {
               <TableCell component="th" scope="row">
                 {file.name}
               </TableCell>
-              {file.size ? (
-                <TableCell align="right">{convertBytes(file.size)}</TableCell>
-              ) : (
-                <TableCell align="right"></TableCell>
-              )}
+              <TableCell align="right">
+                {convertBytes(file.size)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
