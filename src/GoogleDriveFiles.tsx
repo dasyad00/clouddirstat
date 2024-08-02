@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import GoogleIcon from "@mui/icons-material/Google";
 import { Breadcrumbs, Button, Link, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
+import React, { useEffect, useState } from "react";
+import { CloudFolder, CloudItem, instanceOfCloudFolder } from "./cloudDrive";
+import { ListView } from "./components/ListView";
 import {
   GDriveAbout,
   GDriveFile,
@@ -8,8 +11,6 @@ import {
   getFiles,
 } from "./googleDriveService";
 import { convertBytes, partition } from "./utils";
-import { CloudFolder, CloudItem, instanceOfCloudFolder } from "./cloudDrive";
-import { ListView } from "./components/ListView";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.readonly"];
 
@@ -157,7 +158,13 @@ const GoogleDriveFiles: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Google Drive Files
       </Typography>
-      <Button onClick={() => login()}> Login</Button>
+      <Button
+        variant="contained"
+        startIcon={<GoogleIcon />}
+        onClick={() => login()}
+      >
+        Login
+      </Button>
       {rootFolder && <h1>Total: {convertBytes(rootFolder.size)}</h1>}
       {aboutObject && (
         <>
