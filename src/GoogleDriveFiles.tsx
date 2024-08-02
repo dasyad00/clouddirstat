@@ -1,7 +1,8 @@
 import GoogleIcon from "@mui/icons-material/Google";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { Breadcrumbs, Button, Link, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { CloudFolder, CloudItem, instanceOfCloudFolder } from "./cloudDrive";
 import { ListView } from "./components/ListView";
 import {
@@ -79,50 +80,57 @@ async function getFilesRecursive(
 }
 
 const GoogleDriveFiles: React.FC = () => {
-  const [token, setToken] = useState<string>("");
+  const cachedAccessToken = localStorage.getItem("accessToken");
+
+  const [token, setToken] = useState<string>(cachedAccessToken ?? "");
   const [rootFolder, setRootFolder] = useState<CloudFolder>();
   const [aboutObject, setAboutObject] = useState<GDriveAbout>();
   const [folderPath, setFolderPath] = useState<CloudFolder[]>([]);
 
+  const fetchData = useCallback(async (token: string) => {
+    console.log("fetchData()");
+    try {
+      const files = await getFilesRecursive(token);
+      const myDriveCloudFolder: CloudFolder = {
+        id: "root",
+        name: "My Drive",
+        size: getCloudFolderSize(files),
+        iconLink: "",
+        children: files,
+      };
+
+      setRootFolder(myDriveCloudFolder);
+      setFolderPath([myDriveCloudFolder]);
+      const about = await getAbout(token);
+      setAboutObject(about.data);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchData = async () => {
-      console.log("fetchData()");
-      if (token === "") return;
-      try {
-        const files = await getFilesRecursive(token);
-        const myDriveCloudFolder: CloudFolder = {
-          id: "root",
-          name: "My Drive",
-          size: getCloudFolderSize(files),
-          iconLink: "",
-          children: files,
-        };
-
-        setRootFolder(myDriveCloudFolder);
-        setFolderPath([myDriveCloudFolder]);
-        const about = await getAbout(token);
-        setAboutObject(about.data);
-      } catch (error) {
-        console.error("Error fetching files:", error);
-      }
-    };
-
-    fetchData();
-  }, [token]);
+    if (token === "") return;
+    fetchData(token);
+  }, [fetchData, token]);
 
   const onLoginSuccess = (accessToken: string) => {
     console.log(`Received accessToken=${accessToken}`);
     setToken(accessToken);
+    // Cache accessToken
+    localStorage.setItem("accessToken", accessToken);
   };
 
   const login = useGoogleLogin({
     onSuccess: (response) => onLoginSuccess(response.access_token),
-    onError: (error) => console.error(error),
+    onError: (error) => {
+      console.error(error);
+      localStorage.removeItem("accessToken");
+    },
     scope: SCOPES.join(" "),
   });
 
   function onBreadcrumbClick(
-    event: React.MouseEvent<unknown>,
+    _: React.MouseEvent<unknown>,
     cloudFolder: CloudFolder
   ): void {
     const folderIndex = folderPath.findIndex(
@@ -136,7 +144,7 @@ const GoogleDriveFiles: React.FC = () => {
   }
 
   function onItemDoubleClick(
-    event: React.MouseEvent<unknown>,
+    _: React.MouseEvent<unknown>,
     cloudItem: CloudItem
   ): void {
     if (instanceOfCloudFolder(cloudItem)) {
@@ -159,11 +167,20 @@ const GoogleDriveFiles: React.FC = () => {
         Google Drive Files
       </Typography>
       <Button
+        sx={{ m: 2 }}
         variant="contained"
         startIcon={<GoogleIcon />}
         onClick={() => login()}
       >
         Login
+      </Button>
+      <Button
+        sx={{ m: 2 }}
+        variant="contained"
+        startIcon={<RefreshIcon />}
+        onClick={() => fetchData(token)}
+      >
+        Reload
       </Button>
       {rootFolder && <h1>Total: {convertBytes(rootFolder.size)}</h1>}
       {aboutObject && (
