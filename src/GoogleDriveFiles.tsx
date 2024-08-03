@@ -1,6 +1,6 @@
 import GoogleIcon from "@mui/icons-material/Google";
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { Breadcrumbs, Button, Link, Typography } from "@mui/material";
+import { Backdrop, Breadcrumbs, Button, CircularProgress, Link, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
 import React, { useCallback, useEffect, useState } from "react";
 import { CloudFolder, CloudItem, instanceOfCloudFolder } from "./cloudDrive";
@@ -71,7 +71,7 @@ async function getFilesRecursive(
     return {
       id: file.id,
       name: file.name,
-      size: parseInt(file.size || "0"),
+      size: file.ownedByMe ? parseInt(file.size || "0") : 0,
       iconLink: file.iconLink,
     };
   });
@@ -86,6 +86,7 @@ const GoogleDriveFiles: React.FC = () => {
   const [rootFolder, setRootFolder] = useState<CloudFolder>();
   const [aboutObject, setAboutObject] = useState<GDriveAbout>();
   const [folderPath, setFolderPath] = useState<CloudFolder[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchData = useCallback(async (token: string) => {
     console.log("fetchData()");
@@ -111,7 +112,8 @@ const GoogleDriveFiles: React.FC = () => {
 
   useEffect(() => {
     if (token === "") return;
-    fetchData(token);
+    setIsLoading(true);
+    fetchData(token).finally(() => setIsLoading(false));
   }, [fetchData, token]);
 
   const onLoginSuccess = (accessToken: string) => {
@@ -177,6 +179,12 @@ const GoogleDriveFiles: React.FC = () => {
           Login
         </Button>
       )}
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <Button
         sx={{ m: 2 }}
         variant="contained"
