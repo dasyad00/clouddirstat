@@ -105,6 +105,7 @@ const GoogleDriveFiles: React.FC = () => {
       setAboutObject(about.data);
     } catch (error) {
       console.error("Error fetching files:", error);
+      setToken("");
     }
   }, []);
 
@@ -166,14 +167,16 @@ const GoogleDriveFiles: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Google Drive Files
       </Typography>
-      <Button
-        sx={{ m: 2 }}
-        variant="contained"
-        startIcon={<GoogleIcon />}
-        onClick={() => login()}
-      >
-        Login
-      </Button>
+      {token === "" && (
+        <Button
+          sx={{ m: 2 }}
+          variant="contained"
+          startIcon={<GoogleIcon />}
+          onClick={() => login()}
+        >
+          Login
+        </Button>
+      )}
       <Button
         sx={{ m: 2 }}
         variant="contained"
