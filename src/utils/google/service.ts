@@ -51,7 +51,7 @@ export function getSharedDrives(token: string) {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 }
 
@@ -83,7 +83,7 @@ export interface GDriveFilesListResponse {
 
 export function getFiles(
   token: string,
-  params: GDriveFilesListRequestParameters
+  params: GDriveFilesListRequestParameters,
 ) {
   return axios.get<GDriveFilesListResponse>(
     "https://www.googleapis.com/drive/v3/files",
@@ -101,7 +101,7 @@ export function getFiles(
         fields:
           "nextPageToken, kind, incompleteSearch, files(id, name, size, quotaBytesUsed, owners, ownedByMe, mimeType, kind, parents, iconLink)",
       },
-    }
+    },
   );
 }
 
@@ -115,6 +115,6 @@ export function getFile(token: string, fileId: string) {
       params: {
         spaces: "drive",
       },
-    }
+    },
   );
 }

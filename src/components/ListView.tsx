@@ -12,7 +12,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
-import { CloudItem, instanceOfCloudFolder } from "../cloudDrive";
+import { CloudItem, instanceOfCloudFolder } from "../types/cloudDrive";
 import { convertBytes } from "../utils";
 import React, { useMemo, useState } from "react";
 

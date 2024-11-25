@@ -1,11 +1,16 @@
+import { BrowserRouter, Route, Routes } from "react-router";
 import "./App.css";
-import GoogleDriveFiles from "./GoogleDriveFiles";
+import SelectProviderPage from "./pages/SelectProviderPage";
+import FileManagerPage from "./pages/FileManagerPage";
 
 function App() {
   return (
-    <>
-      <GoogleDriveFiles />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route index element={<SelectProviderPage />} />
+        <Route path="/explorer" element={<FileManagerPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

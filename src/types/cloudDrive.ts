@@ -15,6 +15,8 @@ export interface CloudFolder {
 
 export type CloudItem = CloudFile | CloudFolder;
 
-export function instanceOfCloudFolder(object: CloudItem): object is CloudFolder {
+export function instanceOfCloudFolder(
+  object: CloudItem,
+): object is CloudFolder {
   return "children" in object;
 }
