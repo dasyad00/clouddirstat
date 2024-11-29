@@ -1,19 +1,21 @@
-import React from "react";
 import {
   Box,
-  Typography,
+  Button,
   Card,
   CardContent,
-  Button,
+  Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router";
-import { CloudProvider } from "../types/cloudProvider";
 import { useGoogleLogin } from "@react-oauth/google";
-import { GoogleAuthState, GoogleProvider } from "../utils/google/provider";
+import React from "react";
+import { useNavigate } from "react-router";
 import { useAuthContext } from "../contexts/AuthContext";
 import Layout from "../components/Layout";
+import { CloudAuthState, CloudProvider } from "../types/cloudProvider";
+import { DropboxProvider } from "../utils/dropbox/provider";
+import { GoogleAuthState, GoogleProvider } from "../utils/google/provider";
+import useDropboxLogin from "../utils/dropbox/login";
 
-const providers: CloudProvider[] = [GoogleProvider];
+const providers: CloudProvider[] = [GoogleProvider, DropboxProvider];
 
 const GOOGLE_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"];
 
@@ -23,7 +25,18 @@ const SelectProviderPage: React.FC = () => {
 
   const onLoginSuccess = (providerId: string, accessToken: string) => {
     console.log(`Received accessToken=${accessToken} for ${providerId}`);
-    const state = new GoogleAuthState(accessToken);
+    let state: CloudAuthState;
+    switch (providerId) {
+      case GoogleProvider.id:
+        state = new GoogleAuthState(accessToken);
+        break;
+      case DropboxProvider.id:
+        console.log(`DropboxProvider token=${accessToken}`);
+        // eslint-disable-next-line no-fallthrough
+        return;
+      default:
+        return;
+    }
     setAuthState(state);
     navigate("/explorer");
   };
@@ -41,10 +54,19 @@ const SelectProviderPage: React.FC = () => {
     scope: GOOGLE_SCOPES.join(" "),
   });
 
+  const dropboxLogin = useDropboxLogin({
+    onSuccess: (accessToken) => onLoginSuccess("dropbox", accessToken),
+    onError: (error) => onLoginError("dropbox", error),
+    redirectUri: window.location.origin + "/select-provider",
+  });
+
   const handleProviderSelect = async (providerId: string) => {
     switch (providerId) {
-      case "google":
+      case GoogleProvider.id:
         googleLogin();
+        return;
+      case DropboxProvider.id:
+        dropboxLogin();
         return;
       default:
         return;
