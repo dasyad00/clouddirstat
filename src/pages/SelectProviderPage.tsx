@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 import { useAuthContext } from "../contexts/AuthContext";
 import Layout from "../components/Layout";
 import { CloudAuthState, CloudProvider } from "../types/cloudProvider";
-import { DropboxProvider } from "../utils/dropbox/provider";
+import { DropboxAuthState, DropboxProvider } from "../utils/dropbox/provider";
 import { GoogleAuthState, GoogleProvider } from "../utils/google/provider";
 import useDropboxLogin from "../utils/dropbox/login";
 
@@ -31,9 +31,8 @@ const SelectProviderPage: React.FC = () => {
         state = new GoogleAuthState(accessToken);
         break;
       case DropboxProvider.id:
-        console.log(`DropboxProvider token=${accessToken}`);
-        // eslint-disable-next-line no-fallthrough
-        return;
+        state = new DropboxAuthState(accessToken);
+        break;
       default:
         return;
     }
