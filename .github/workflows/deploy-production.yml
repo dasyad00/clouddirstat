@@ -20,6 +20,10 @@ concurrency:
   group: 'pages'
   cancel-in-progress: true
 
+# Pass Actions Secrets
+env:
+  VITE_GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_DRIVE_CLIENT_ID }}
+
 jobs:
   # Single deploy job since we're just deploying
   deploy:
