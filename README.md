@@ -1,30 +1,17 @@
-# React + TypeScript + Vite
+# clouddirstat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Track and optimize cloud storage usage.
 
-Currently, two official plugins are available:
+Inspired by [WinDirStat](https://windirstat.net/) and [qdirstat](https://github.com/shundhammer/qdirstat).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Setting up `.env`
 
-## Expanding the ESLint configuration
+### Google
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+1. Create a project in [Google Cloud](https://console.cloud.google.com/)
+2. Navigate to APIs and services => Credentials.
+3. Create OAuth 2.0 Client ID with the following options:
+  - Application type: Web application
+  - Authorized JavaScript origins: `http://localhost:5173`
+  - Authorized redirect URIs: `http://localhost:5173`
+4. Add the client ID as the secret `VITE_GOOGLE_DRIVE_CLIENT_ID`.
