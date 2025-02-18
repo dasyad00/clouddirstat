@@ -15,3 +15,9 @@ Inspired by [WinDirStat](https://windirstat.net/) and [qdirstat](https://github.
   - Authorized JavaScript origins: `http://localhost:5173`
   - Authorized redirect URIs: `http://localhost:5173`
 4. Add the client ID as the secret `VITE_GOOGLE_DRIVE_CLIENT_ID`.
+
+## Updating dependencies
+
+```shell
+npx npm-check-updates -u
+```
