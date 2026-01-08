@@ -1,26 +1,38 @@
-import React from 'react';
-import { Link } from 'react-router';
+import { AppBar, Button, Toolbar, Typography } from "@mui/material";
+import React from "react";
+import { Link } from "react-router";
 
 const LandingPage: React.FC = () => {
   return (
     <>
-      <header>
-        <div className="container">
-          <a href="/" style={{ textDecoration: 'none', color: 'black', fontSize: '24px', fontWeight: 'bold' }}>CloudDirStat</a>
-        </div>
-      </header>
+      <AppBar color="default" elevation={0}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            CloudDirStat
+          </Typography>
+        </Toolbar>
+      </AppBar>
       <main>
         <div className="hero">
           <div className="container">
             <h1>Track and Optimize Your Cloud Storage</h1>
-            <p>CloudDirStat helps you understand your cloud storage usage and identify opportunities to save money.</p>
-            <Link to="/select-provider" className="cta-button">Get Started for Free</Link>
+            <p>
+              CloudDirStat helps you understand your cloud storage usage and
+              identify opportunities to save money.
+            </p>
+            <Button component={Link} to="/select-provider" variant="contained">
+              Get Started for Free
+            </Button>
           </div>
         </div>
       </main>
       <footer>
         <div className="container">
-          <p>&copy; 2023 CloudDirStat. All rights reserved.</p>
+          <p>
+            {"Copyright © "}
+            CloudDirStat {new Date().getFullYear()}
+            {"."}
+          </p>
         </div>
       </footer>
     </>
