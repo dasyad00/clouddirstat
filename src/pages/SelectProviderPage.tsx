@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Button,
-  Grid,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import { CloudProvider } from "../types/cloudProvider";
@@ -56,9 +55,19 @@ const SelectProviderPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Select a Cloud Storage Provider
       </Typography>
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          gridTemplateColumns: {
+            xs: "repeat(1, 1fr)",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+          },
+        }}
+      >
         {providers.map((provider) => (
-          <Grid item xs={12} sm={6} md={4} key={provider.id}>
+          <Box key={provider.id}>
             <Card>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h5" gutterBottom>
@@ -72,9 +81,9 @@ const SelectProviderPage: React.FC = () => {
                 </Button>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 };
