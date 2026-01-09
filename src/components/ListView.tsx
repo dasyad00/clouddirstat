@@ -15,6 +15,7 @@ import { visuallyHidden } from "@mui/utils";
 import { CloudItem, instanceOfCloudFolder } from "../types/cloudDrive";
 import { convertBytes } from "../utils";
 import React, { useMemo, useState } from "react";
+import { Folder } from "@mui/icons-material";
 
 type Order = "asc" | "desc";
 
@@ -152,12 +153,16 @@ export const ListView = (props: ListViewProps) => {
               onDoubleClick={(event) => onItemDoubleClick(event, file)}
             >
               <TableCell>
-                <img
-                  srcSet={`${file.iconLink}?w=161&fit=crop&auto=format&dpr=2 2x`}
-                  src={`${file.iconLink}?w=161&fit=crop&auto=format`}
-                  alt={file.iconLink}
-                  loading="lazy"
-                />
+                {file.iconLink ? (
+                  <img
+                    srcSet={`${file.iconLink}?w=161&fit=crop&auto=format&dpr=2 2x`}
+                    src={`${file.iconLink}?w=161&fit=crop&auto=format`}
+                    alt={file.iconLink}
+                    loading="lazy"
+                  />
+                ) : instanceOfCloudFolder(file) && (
+                  <Folder />
+                )}
               </TableCell>
               <TableCell component="th" scope="row">
                 {file.name}
