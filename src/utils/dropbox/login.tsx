@@ -22,6 +22,16 @@ function getDropboxAuthUrl(redirectUri: string) {
   return authUrl;
 }
 
+type DropboxResponse2 = {
+  access_token : string;
+  account_id : string;
+  expires_in : number;
+  refresh_token : string;
+  scope : string;
+  token_type : string;
+  uid : string;
+}
+
 // Complete the Dropbox OAuth2 flow by exchanging the code for an access token
 async function onDropboxCompleteAuth(
   redirectUri: string,
@@ -31,7 +41,7 @@ async function onDropboxCompleteAuth(
   if (codeVerifier === null) return null;
   dbxAuth.setCodeVerifier(codeVerifier);
   const tokenResult = await dbxAuth.getAccessTokenFromCode(redirectUri, code);
-  const accessToken = tokenResult.result.access_token;
+  const accessToken = (tokenResult.result as DropboxResponse2).access_token;
   return accessToken;
 }
 
