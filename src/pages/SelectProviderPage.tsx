@@ -11,6 +11,7 @@ import { CloudProvider } from "../types/cloudProvider";
 import { useGoogleLogin } from "@react-oauth/google";
 import { GoogleAuthState, GoogleProvider } from "../utils/google/provider";
 import { useAuthContext } from "../contexts/AuthContext";
+import Layout from "../components/Layout";
 
 const providers: CloudProvider[] = [GoogleProvider];
 
@@ -51,7 +52,7 @@ const SelectProviderPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ padding: 4 }}>
+    <Layout>
       <Typography variant="h4" gutterBottom>
         Select a Cloud Storage Provider
       </Typography>
@@ -84,7 +85,7 @@ const SelectProviderPage: React.FC = () => {
           </Box>
         ))}
       </Box>
-    </Box>
+    </Layout>
   );
 };
 
