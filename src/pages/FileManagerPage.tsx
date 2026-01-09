@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   Link,
+  Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -15,6 +16,7 @@ import {
 import { ListView } from "../components/ListView";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useAuthContext } from "../contexts/AuthContext";
+import Layout from "../components/Layout";
 
 const FileExplorerPage: React.FC = () => {
   const { authState } = useAuthContext();
@@ -79,14 +81,15 @@ const FileExplorerPage: React.FC = () => {
   }
 
   return (
-    <div>
+    <Layout>
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={isLoading}
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-      <h1>{`Connected to ${authState.provider.name}`}</h1>
+      <Typography variant="h4" >{`Connected to ${authState.provider.name}`}</Typography>
+      {/*<h1>{`Connected to ${authState.provider.name}`}</h1>*/}
       <Button
         sx={{ m: 2 }}
         variant="contained"
@@ -113,7 +116,7 @@ const FileExplorerPage: React.FC = () => {
           onItemDoubleClick={onItemDoubleClick}
         />
       )}
-    </div>
+    </Layout>
   );
 };
 
