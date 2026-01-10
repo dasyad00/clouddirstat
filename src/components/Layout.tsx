@@ -1,5 +1,6 @@
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import React from "react";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
           </p>
         </div>
       </footer>
+      <ReactQueryDevtools initialIsOpen={false} />
     </>
   );
 }
