@@ -8,5 +8,6 @@ export interface CloudProvider {
 export interface CloudAuthState {
   provider: CloudProvider;
   token: string;
-  getRootFolder(): Promise<CloudFolder>;
+  getFolder(folderId?: string): Promise<CloudFolder>;
+  getFolderPath(folderId: string): Promise<CloudFolder[]>;
 }

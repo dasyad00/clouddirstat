@@ -2,7 +2,7 @@ import { partition } from "../../utils";
 import { CloudFolder, CloudItem } from "../../types/cloudDrive";
 import { CloudAuthState, CloudProvider } from "../../types/cloudProvider";
 import { getCloudFolderSize } from "../cloudFolder";
-import { GDriveFile, getFiles } from "./service";
+import { GDriveFile, getFile, getFiles } from "./service";
 
 const gdriveFolderMimeType = "application/vnd.google-apps.folder";
 
@@ -22,34 +22,24 @@ function GDriveFileToCloudFolder(
 
 async function getFilesRecursive(
   token: string,
-  folderId: string = "root",
-  depth: number = 1000,
+  folderId: string,
 ): Promise<CloudItem[]> {
   let gDriveFiles: GDriveFile[] = [];
   let pageToken: string | undefined = undefined;
   do {
     const response = await getFiles(token, {
-      q: `'${folderId}' in parents`,
+      q: `'${folderId}' in parents and trashed = false`,
       nextPageToken: pageToken,
     });
     gDriveFiles = gDriveFiles.concat(response.data.files);
     pageToken = response.data.nextPageToken;
-    if (pageToken) {
-      console.log(`pageToken=${pageToken}`);
-    }
   } while (pageToken);
 
   const [folders, files] = partition(
     (file) => file.mimeType === gdriveFolderMimeType,
     gDriveFiles,
   );
-  const cloudFoldersPromise = folders.map(async (folder) => {
-    if (depth < 0) {
-      return GDriveFileToCloudFolder(folder, []);
-    }
-    const items = await getFilesRecursive(token, folder.id, depth - 1);
-    return GDriveFileToCloudFolder(folder, items);
-  });
+
   const cloudFiles = files.map((file) => {
     return {
       id: file.id,
@@ -58,7 +48,7 @@ async function getFilesRecursive(
       iconLink: file.iconLink,
     };
   });
-  const cloudFolders = await Promise.all(cloudFoldersPromise);
+  const cloudFolders = folders.map((folder) => GDriveFileToCloudFolder(folder, []));
   return (cloudFolders as CloudItem[]).concat(cloudFiles);
 }
 
@@ -70,20 +60,57 @@ export const GoogleProvider: CloudProvider = {
 export class GoogleAuthState implements CloudAuthState {
   provider: CloudProvider = GoogleProvider;
   token: string;
+  rootFolder: CloudFolder = {
+    id: "root",
+    name: "My Drive",
+    size: 0,
+    iconLink: "",
+    children: [],
+  };
+
 
   constructor(token: string) {
     this.token = token;
   }
 
-  public async getRootFolder(): Promise<CloudFolder> {
-    const files = await getFilesRecursive(this.token);
-    const myDriveCloudFolder: CloudFolder = {
-      id: "root",
-      name: "My Drive",
-      size: getCloudFolderSize(files),
+  public async getFolder(folderId?: string): Promise<CloudFolder> {
+    const isRoot = !folderId || folderId === "root";
+    const currentFolderId = isRoot ? "root" : folderId;
+
+    const children = await getFilesRecursive(this.token, currentFolderId);
+    if (isRoot) {
+      return {
+        ...this.rootFolder,
+        children,
+        size: getCloudFolderSize(children),
+      };
+    }
+
+    const folder = (await getFile(this.token, currentFolderId)).data;
+    return GDriveFileToCloudFolder(folder, children);
+  }
+
+  public async getFolderPath(folderId: string): Promise<CloudFolder[]> {
+    if (folderId === this.rootFolder.id) {
+      return [this.rootFolder];
+    }
+
+    const folderResponse = await getFile(this.token, folderId);
+    const currentFolder: CloudFolder = {
+      id: folderResponse.data.id,
+      name: folderResponse.data.name,
+      size: 0,
       iconLink: "",
-      children: files,
+      children: [],
     };
-    return myDriveCloudFolder;
+
+    const parentId = folderResponse.data.parents?.[0];
+    if (parentId) {
+      const parentPath = await this.getFolderPath(parentId);
+      return [...parentPath, currentFolder];
+    } else {
+      const parentPath = await this.getFolderPath(this.rootFolder.id);
+      return [...parentPath, currentFolder];
+    }
   }
 }

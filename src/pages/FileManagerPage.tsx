@@ -1,4 +1,4 @@
-import { Navigate } from "react-router";
+import { Navigate, useNavigate, useParams } from "react-router";
 import {
   Backdrop,
   Breadcrumbs,
@@ -20,41 +20,39 @@ import Layout from "../components/Layout";
 
 const FileExplorerPage: React.FC = () => {
   const { authState } = useAuthContext();
+  const navigate = useNavigate();
+  const params = useParams();
 
   const [rootFolder, setRootFolder] = useState<CloudFolder>();
   const [folderPath, setFolderPath] = useState<CloudFolder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchData = useCallback(async () => {
-    console.log("fetchData()");
-    if (authState === null) return;
-    try {
-      const rootFolder = await authState.getRootFolder();
-      setRootFolder(rootFolder);
-      setFolderPath([rootFolder]);
-    } catch (error) {
-      console.error("Error fetching files:", error);
-    }
-  }, [authState]);
+  const fetchData = useCallback(
+    async (path?: string) => {
+      if (authState === null) return;
+      try {
+        const currentFolder = await authState.getFolder(path);
+        const folderPath = await authState.getFolderPath(currentFolder.id);
+        setRootFolder(currentFolder);
+        setFolderPath(folderPath);
+      } catch (error) {
+        console.error("Error fetching files:", error);
+      }
+    },
+    [authState],
+  );
 
   useEffect(() => {
     if (authState === null || authState.token === "") return;
     setIsLoading(true);
-    fetchData().finally(() => setIsLoading(false));
-  }, [fetchData, authState]);
+    fetchData(params["*"]).finally(() => setIsLoading(false));
+  }, [fetchData, authState, params]);
 
   function onBreadcrumbClick(
     _: React.MouseEvent<unknown>,
     cloudFolder: CloudFolder,
   ): void {
-    const folderIndex = folderPath.findIndex(
-      (folder) => folder.id === cloudFolder.id,
-    );
-    if (folderIndex === -1) return;
-
-    const newPath = folderPath.slice(0, folderIndex + 1);
-    setRootFolder(cloudFolder);
-    setFolderPath(newPath);
+    navigate(`/explorer/${cloudFolder.id}`);
   }
 
   function onItemDoubleClick(
@@ -62,16 +60,14 @@ const FileExplorerPage: React.FC = () => {
     cloudItem: CloudItem,
   ): void {
     if (instanceOfCloudFolder(cloudItem)) {
-      setRootFolder(cloudItem);
-      setFolderPath([...folderPath, cloudItem]);
+      navigate(`/explorer/${cloudItem.id}`);
     }
   }
 
   function onNavigateUp() {
     if (folderPath.length > 1) {
-      const newPath = folderPath.slice(0, -1);
-      setRootFolder(newPath[newPath.length - 1]);
-      setFolderPath(newPath);
+      const parentFolder = folderPath[folderPath.length - 2];
+      navigate(`/explorer/${parentFolder.id}`);
     }
   }
 
@@ -89,12 +85,11 @@ const FileExplorerPage: React.FC = () => {
         <CircularProgress color="inherit" />
       </Backdrop>
       <Typography variant="h4" >{`Connected to ${authState.provider.name}`}</Typography>
-      {/*<h1>{`Connected to ${authState.provider.name}`}</h1>*/}
       <Button
         sx={{ m: 2 }}
         variant="contained"
         startIcon={<RefreshIcon />}
-        onClick={() => fetchData()}
+        onClick={() => fetchData(params["*"])}
       >
         Reload
       </Button>
