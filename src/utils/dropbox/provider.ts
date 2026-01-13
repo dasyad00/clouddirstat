@@ -2,7 +2,7 @@ import { Dropbox } from "dropbox";
 import { CloudFolder } from "../../types/cloudDrive";
 import { CloudAuthState, CloudProvider } from "../../types/cloudProvider";
 import { getCloudFolderSize } from "../cloudFolder";
-import { getFiles } from "./service";
+import { getFiles, getMetadata } from "./service";
 
 export const DropboxProvider: CloudProvider = {
   id: "dropbox",
@@ -13,21 +13,72 @@ export class DropboxAuthState implements CloudAuthState {
   provider: CloudProvider = DropboxProvider;
   token: string;
   dbx: Dropbox;
+  rootFolder: CloudFolder = {
+    id: "root",
+    name: "Dropbox",
+    size: 0,
+    iconLink: "",
+    children: [],
+  };
 
   constructor(token: string) {
     this.token = token;
     this.dbx = new Dropbox({ accessToken: token });
   }
 
-  async getRootFolder(): Promise<CloudFolder> {
-    const files = await getFiles(this.dbx);
-    const rootFolder: CloudFolder = {
-      id: "root",
-      name: "Dropbox",
-      size: getCloudFolderSize(files),
+  public async getFolder(folderId?: string): Promise<CloudFolder> {
+    const isRoot = !folderId || folderId === "root";
+    const currentFolderId = isRoot ? "root" : folderId;
+
+    const children = await getFiles(this.dbx, currentFolderId);
+    const size = getCloudFolderSize(children);
+
+    if (isRoot) {
+      return {
+        ...this.rootFolder,
+        children,
+        size,
+      };
+    }
+
+    const metadata = await getMetadata(this.dbx, currentFolderId);
+    return {
+      id: metadata.id || currentFolderId,
+      name: metadata.name,
+      size,
       iconLink: "",
-      children: files,
+      children,
     };
-    return rootFolder;
+  }
+
+  public async getFolderPath(folderId: string): Promise<CloudFolder[]> {
+    if (folderId === "root" || folderId === "") {
+      return [this.rootFolder];
+    }
+
+    try {
+      const metadata = await getMetadata(this.dbx, folderId);
+      const path = metadata.path_lower;
+      if (!path) {
+        return [this.rootFolder];
+      }
+
+      const parentPath = path.substring(0, path.lastIndexOf("/"));
+      const parentFolderPath = await this.getFolderPath(parentPath);
+      
+      const currentFolder: CloudFolder = {
+        id: metadata.id || folderId,
+        name: metadata.name,
+        size: 0,
+        iconLink: "",
+        children: [],
+      };
+
+      return [...parentFolderPath, currentFolder];
+    } catch (error) {
+      console.error("Error getting folder path for", folderId, error);
+      // If an error occurs (e.g., folder not found), return the root path
+      return [this.rootFolder];
+    }
   }
 }
