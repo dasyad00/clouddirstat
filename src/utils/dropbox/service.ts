@@ -1,6 +1,16 @@
-import { Dropbox, files as dbxFiles } from "dropbox";
+import { Dropbox, DropboxResponseError, files as dbxFiles } from "dropbox";
 import { CloudFile, CloudFolder, CloudItem } from "../../types/cloudDrive";
 import { getCloudFolderSize } from "../cloudFolder";
+
+export function getMetadataId(metadata: dbxFiles.MetadataReference): string {
+  if (metadata[".tag"] === "folder") {
+    return (metadata as dbxFiles.FolderMetadataReference).id;
+  } else if (metadata[".tag"] === "file") {
+    return (metadata as dbxFiles.FileMetadataReference).id;
+  } else {
+    return metadata.name
+  }
+}
 
 // Get the list of files and folders
 export async function getFiles(
@@ -51,11 +61,15 @@ export async function getFiles(
 
     return await Promise.all(itemsPromises);
   } catch (error) {
-    const err = (error instanceof Error) ? error.message : error;
-    if (err?.error?.error_summary?.includes('path/not_found')) {
-      return [];
+    let err = undefined;
+    if (error instanceof DropboxResponseError) {
+      err = error.error;
+    } else if (error instanceof Error) {
+      err = error.message;
+    } else {
+      err = error;
     }
-    console.error(`Error fetching files from Dropbox for path: ${path}`, error);
+    console.error(`Error fetching files from Dropbox for path: ${path}`, err);
     throw error;
   }
 }

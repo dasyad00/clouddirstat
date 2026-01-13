@@ -2,7 +2,7 @@ import { Dropbox } from "dropbox";
 import { CloudFolder } from "../../types/cloudDrive";
 import { CloudAuthState, CloudProvider } from "../../types/cloudProvider";
 import { getCloudFolderSize } from "../cloudFolder";
-import { getFiles, getMetadata } from "./service";
+import { getFiles, getMetadata, getMetadataId } from "./service";
 
 export const DropboxProvider: CloudProvider = {
   id: "dropbox",
@@ -43,7 +43,7 @@ export class DropboxAuthState implements CloudAuthState {
 
     const metadata = await getMetadata(this.dbx, currentFolderId);
     return {
-      id: metadata.id || currentFolderId,
+      id: getMetadataId(metadata),
       name: metadata.name,
       size,
       iconLink: "",
@@ -65,9 +65,9 @@ export class DropboxAuthState implements CloudAuthState {
 
       const parentPath = path.substring(0, path.lastIndexOf("/"));
       const parentFolderPath = await this.getFolderPath(parentPath);
-      
+
       const currentFolder: CloudFolder = {
-        id: metadata.id || folderId,
+        id: getMetadataId(metadata),
         name: metadata.name,
         size: 0,
         iconLink: "",
