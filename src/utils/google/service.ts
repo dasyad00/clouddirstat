@@ -105,17 +105,21 @@ export function getFiles(
   );
 }
 
-export function getFile(token: string, fileId: string, fields = "id,name,mimeType,kind,parents,iconLink,size,ownedByMe") {
-    return axios.get<GDriveFile>(
-        `https://www.googleapis.com/drive/v3/files/${fileId}`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            params: {
-                fields,
-                supportsAllDrives: true,
-            },
-        },
-    );
+export function getFile(
+  token: string,
+  fileId: string,
+  fields = "id,name,mimeType,kind,parents,iconLink,size,ownedByMe",
+) {
+  return axios.get<GDriveFile>(
+    `https://www.googleapis.com/drive/v3/files/${fileId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        fields,
+        supportsAllDrives: true,
+      },
+    },
+  );
 }
