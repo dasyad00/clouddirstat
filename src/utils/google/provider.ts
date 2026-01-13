@@ -30,8 +30,11 @@ async function getFilesRecursive(
     const response = await getFiles(token, {
       q: `'${folderId}' in parents and trashed = false`,
       nextPageToken: pageToken,
+      fields: "nextPageToken, files(id, name, mimeType, size, iconLink, ownedByMe)",
     });
-    gDriveFiles = gDriveFiles.concat(response.data.files);
+    if (response.data.files) {
+      gDriveFiles = gDriveFiles.concat(response.data.files);
+    }
     pageToken = response.data.nextPageToken;
   } while (pageToken);
 
@@ -48,7 +51,20 @@ async function getFilesRecursive(
       iconLink: file.iconLink,
     };
   });
-  const cloudFolders = folders.map((folder) => GDriveFileToCloudFolder(folder, []));
+
+  const cloudFoldersPromises = folders.map(async (folder) => {
+    const children = await getFilesRecursive(token, folder.id);
+    const folderSize = getCloudFolderSize(children);
+    return {
+      id: folder.id,
+      name: folder.name,
+      size: folderSize,
+      iconLink: folder.iconLink,
+      children: [], // Return empty children for the list view
+    } as CloudFolder;
+  });
+  const cloudFolders = await Promise.all(cloudFoldersPromises);
+
   return (cloudFolders as CloudItem[]).concat(cloudFiles);
 }
 
