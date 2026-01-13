@@ -94,6 +94,7 @@ export function getFiles(
       params: {
         // spaces: "drive",
         pageSize: 1000,
+        pageToken: params.nextPageToken,
         q: params.q,
         driveId: params.driveId,
         includeItemsFromAllDrives: true,

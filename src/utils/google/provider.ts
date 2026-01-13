@@ -30,7 +30,6 @@ async function getFilesRecursive(
     const response = await getFiles(token, {
       q: `'${folderId}' in parents and trashed = false`,
       nextPageToken: pageToken,
-      fields: "nextPageToken, files(id, name, mimeType, size, iconLink, ownedByMe)",
     });
     if (response.data.files) {
       gDriveFiles = gDriveFiles.concat(response.data.files);
