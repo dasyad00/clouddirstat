@@ -8,51 +8,52 @@ export async function getFiles(
   path: string = ""
 ): Promise<CloudItem[]> {
   try {
-    let response = await dbx.filesListFolder({ path });
-    let hasMore = response.result.has_more;
-    let cursor = response.result.cursor;
-    const output = response.result.entries;
-    while (hasMore) {
-      response = await dbx.filesListFolderContinue({ cursor });
-      response.result.entries;
-      hasMore = response.result.has_more;
-      cursor = response.result.cursor;
-      const moreOutput = response.result.entries;
-      output.concat(moreOutput);
+    // For root, path is "", for others it's the folder ID
+    const listPath = path === "root" ? "" : path;
+    let response = await dbx.filesListFolder({ path: listPath });
+    let entries = response.result.entries;
+
+    while (response.result.has_more) {
+      response = await dbx.filesListFolderContinue({
+        cursor: response.result.cursor,
+      });
+      entries = entries.concat(response.result.entries);
     }
 
-    const folders: dbxFiles.FolderMetadataReference[] = output.filter(
-      (metadata) => metadata[".tag"] === "folder"
-    );
-    const files: dbxFiles.FileMetadataReference[] = output.filter(
-      (metadata) => metadata[".tag"] === "file"
-    );
-
-    const cloudFoldersPromise: Promise<CloudFolder>[] = folders.map(
-      async (folder) => {
-        const items = await getFiles(dbx, folder.id);
-        const folderSize = getCloudFolderSize(items);
+    const itemsPromises = entries.map(async (entry): Promise<CloudItem> => {
+      if (entry[".tag"] === "folder") {
+        const children = await getFiles(dbx, entry.id);
+        const folderSize = getCloudFolderSize(children);
         return {
-          id: folder.id,
-          name: folder.name,
-          iconLink: folder.preview_url ?? "",
+          id: entry.id,
+          name: entry.name,
           size: folderSize,
-          children: items,
-        };
+          iconLink: "",
+          children: [], // Return empty children for the list view to keep the payload light
+        } as CloudFolder;
+      } else {
+        const file = entry as dbxFiles.FileMetadata;
+        return {
+          id: entry.id,
+          name: entry.name,
+          size: file.size || 0,
+          iconLink: "",
+        } as CloudFile;
       }
-    );
-    const cloudFiles: CloudFile[] = files.map((file) => {
-      return {
-        id: file.id,
-        name: file.name,
-        size: file.size,
-        iconLink: file.preview_url ?? "",
-      };
     });
-    const cloudFolders = await Promise.all(cloudFoldersPromise);
-    return (cloudFolders as CloudItem[]).concat(cloudFiles);
+
+    return await Promise.all(itemsPromises);
   } catch (error) {
-    console.error("Error fetching files from Dropbox:", error);
+    const err = error as any;
+    if (err?.error?.error_summary?.includes('path/not_found')) {
+      return [];
+    }
+    console.error(`Error fetching files from Dropbox for path: ${path}`, error);
     throw error;
   }
+}
+
+export async function getMetadata(dbx: Dropbox, id: string): Promise<dbxFiles.MetadataReference> {
+  const response = await dbx.filesGetMetadata({ path: id });
+  return response.result;
 }
