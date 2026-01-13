@@ -31,20 +31,27 @@ export async function getFiles(
           iconLink: "",
           children: [], // Return empty children for the list view to keep the payload light
         } as CloudFolder;
-      } else {
-        const file = entry as dbxFiles.FileMetadata;
+      } else if (entry[".tag"] === "file") {
+        const file = entry as dbxFiles.FileMetadataReference;
         return {
           id: entry.id,
           name: entry.name,
           size: file.size || 0,
           iconLink: "",
         } as CloudFile;
+      } else {
+        return {
+          id: entry.name,
+          name: entry.name,
+          size: 0,
+          iconLink: "",
+        }
       }
     });
 
     return await Promise.all(itemsPromises);
   } catch (error) {
-    const err = error as any;
+    const err = (error instanceof Error) ? error.message : error;
     if (err?.error?.error_summary?.includes('path/not_found')) {
       return [];
     }
